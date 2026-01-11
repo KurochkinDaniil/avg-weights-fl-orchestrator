@@ -1,0 +1,9 @@
+[submodule "apps/frontend"]
+	path = apps/frontend
+	url = https://github.com/Parnishkaspb/swipe-keyboard.git
+[submodule "apps/server"]
+	path = apps/server
+	url = https://github.com/Vexrina/avg-weights-federative-ml-itmo.git
+[submodule "apps/client"]
+	path = apps/client
+	url = https://github.com/KurochkinDaniil/avg-weights-fl-client-backend.git
