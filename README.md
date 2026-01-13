@@ -4,8 +4,21 @@
 
 ## Быстрый старт
 
+**С Git Bash (Windows/Mac/Linux):**
 ```bash
 ./start.sh
+```
+
+**Или вручную (Windows CMD/PowerShell):**
+```bash
+# Terminal 1 - Backend
+cd apps\client
+venv\Scripts\activate
+python scripts\run_api.py
+
+# Terminal 2 - Frontend  
+cd apps\frontend
+start demo\index.html
 ```
 
 Откроется браузер с клавиатурой:
