@@ -22,8 +22,12 @@ if [ ! -d "venv" ]; then
     python3 -m venv venv
 fi
 
-# Activate venv
-source venv/bin/activate
+# Activate venv (Windows or Unix)
+if [ -f "venv/Scripts/activate" ]; then
+    source venv/Scripts/activate  # Windows
+elif [ -f "venv/bin/activate" ]; then
+    source venv/bin/activate      # Unix
+fi
 
 # Install dependencies if needed
 if [ ! -f ".deps_installed" ]; then
