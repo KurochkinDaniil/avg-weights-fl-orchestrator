@@ -1,91 +1,45 @@
 # Federated Learning Swipe Keyboard
 
-Клавиатура со свайп-жестами + локальное обучение модели.
+Клавиатура со свайп-жестами + распределённое обучение модели.
 
-## Быстрый старт
+---
 
-**С Git Bash (Windows/Mac/Linux):**
-```bash
-./start.sh
-```
-
-**Или вручную (Windows CMD/PowerShell):**
-```bash
-# Terminal 1 - Backend
-cd apps\client
-venv\Scripts\activate
-python scripts\run_api.py
-
-# Terminal 2 - Frontend  
-cd apps\frontend
-start demo\index.html
-```
-
-Откроется браузер с клавиатурой:
-1. Делаешь свайп по буквам
-2. Нажимаешь "Предсказать слово"
-3. Видишь предсказание - можешь:
-   - **✓ Принять** - если правильно
-   - **✓ Сохранить исправленное** - если неправильно (исправь в поле)
-   - **✗ Отменить** - если не нужно
-
-Только подтверждённые слова сохраняются для обучения!
-
-## Что запускается
-
-- **Backend API** на `http://localhost:8000` (FastAPI, PyTorch)
-- **Frontend** в браузере (клавиатура)
-
-## Проверить
+### 1Клонировать с submodules:
 
 ```bash
-curl http://localhost:8000/health
-# {"status": "healthy"}
+git clone --recurse-submodules https://github.com/KurochkinDaniil/avg-weights-fl-orchestrator.git
+cd fl
 ```
 
-## Обучение (Windows/Linux)
+### Запустить:
 
-После того как собрали 20+ свайпов:
+**Только клавиатура + inference (без сервера):**
+```bash
+make dev
+```
+
+**Полная система (с FL-сервером):**
+```bash
+make up
+```
+
+### Открыть в браузере:
+
+```
+http://localhost:3000/demo/index.html
+```
+
+---
+
+## Команды Makefile
 
 ```bash
-cd apps/client
-./train.sh
+make dev       # Запустить только клиент + frontend (без сервера)
+make up        # Запустить полную систему (с PostgreSQL, MinIO, Go-сервером)
+make down      # Остановить все контейнеры
+make logs      # Показать логи всех сервисов
+make build     # Пересобрать Docker образы
+make clean     # Удалить все контейнеры и volumes
+make train     # Войти в контейнер и запустить обучение
+make status    # Показать статус контейнеров
 ```
-
-Подождать 5-30 минут. Модель обучится на ваших данных.
-
-**Для Mac:** Inference и сбор данных работают. Обучение запускать на Windows/Linux.
-
-## Остановить
-
-```bash
-# Найти процесс
-lsof -ti:8000
-
-# Убить
-lsof -ti:8000 | xargs kill -9
-```
-
-## Структура
-
-```
-fl/
-├── start.sh              # Запуск всего
-├── apps/
-│   ├── frontend/         # Клавиатура (JS)
-│   ├── client/           # Backend (Python)
-│   │   ├── run.sh       # Только API
-│   │   └── train.sh     # Обучение
-│   └── server/          # Go сервер (не используется пока)
-```
-
-## Настройки
-
-Ускорить обучение:
-
-```bash
-# apps/client/.env
-NUM_EPOCHS=2
-BATCH_SIZE=64
-```
-
