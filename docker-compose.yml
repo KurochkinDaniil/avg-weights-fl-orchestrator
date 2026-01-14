@@ -1,0 +1,119 @@
+version: '3.8'
+
+services:
+  # PostgreSQL Database
+  postgres:
+    image: postgres:15-alpine
+    container_name: fl-postgres
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: fl_metadata
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # MinIO (S3-compatible storage)
+  minio:
+    image: minio/minio:latest
+    container_name: fl-minio
+    ports:
+      - "9000:9000"  # S3 API
+      - "9001:9001"  # Web Console
+    environment:
+      MINIO_ROOT_USER: admin
+      MINIO_ROOT_PASSWORD: admin12345
+    command: server /data --console-address ":9001"
+    volumes:
+      - minio_data:/data
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9000/minio/health/live"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Create MinIO bucket
+  minio-init:
+    image: minio/mc:latest
+    container_name: fl-minio-init
+    depends_on:
+      minio:
+        condition: service_healthy
+    restart: "no"
+    entrypoint: >
+      /bin/sh -c "
+      mc alias set local http://minio:9000 admin admin12345;
+      mc mb -p local/fl-models;
+      mc policy set public local/fl-models;
+      echo 'MinIO bucket created successfully';
+      "
+
+  # Go Server (gRPC + HTTP)
+  server:
+    build:
+      context: ./apps/server
+      dockerfile: api/dockerfile
+    container_name: fl-server
+    ports:
+      - "50051:50051"  # gRPC
+      - "8081:8081"    # HTTP (если есть)
+    environment:
+      - POSTGRES_HOST=postgres
+      - POSTGRES_PORT=5432
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
+      - POSTGRES_DB=fl_metadata
+      - MINIO_ENDPOINT=minio:9000
+      - MINIO_ACCESS_KEY=admin
+      - MINIO_SECRET_KEY=admin12345
+      - MINIO_BUCKET=fl-models
+    depends_on:
+      postgres:
+        condition: service_healthy
+      minio:
+        condition: service_healthy
+      minio-init:
+        condition: service_completed_successfully
+    restart: unless-stopped
+
+  # Python Client Backend
+  client:
+    build:
+      context: ./apps/client
+      dockerfile: Dockerfile
+    container_name: fl-client
+    ports:
+      - "8000:8000"
+    environment:
+      - API_HOST=0.0.0.0
+      - API_PORT=8000
+      - SERVER_GRPC_URL=server:50051
+      - CLIENT_ID=client-docker-001
+    volumes:
+      - ./apps/client/data:/app/data  # Persist training data
+      - ./apps/client/model2.pt:/app/model2.pt:ro  # Mount model
+    depends_on:
+      - server
+    restart: unless-stopped
+
+  # Frontend (Nginx)
+  frontend:
+    build:
+      context: ./apps/frontend
+      dockerfile: Dockerfile
+    container_name: fl-frontend
+    ports:
+      - "3000:80"
+    depends_on:
+      - client
+    restart: unless-stopped
+
+volumes:
+  postgres_data:
+  minio_data:

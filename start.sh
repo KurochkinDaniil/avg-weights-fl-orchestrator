@@ -82,10 +82,22 @@ cd ../..
 echo ""
 echo "Setup complete!"
 echo ""
-echo "Next steps:"
-echo "   1. Open: apps/frontend/demo/index.html"
-echo "   2. Make a swipe gesture on the keyboard"
-echo "   3. Watch the predicted word appear!"
+
+# Open browser
+DEMO_PATH="apps/frontend/demo/index.html"
+echo "Opening keyboard in browser..."
+
+if [[ "$OSTYPE" == "darwin"* ]]; then
+    # Mac
+    open "$DEMO_PATH"
+elif [[ "$OSTYPE" == "msys" || "$OSTYPE" == "win32" ]]; then
+    # Windows (Git Bash)
+    start "$DEMO_PATH"
+else
+    # Linux
+    xdg-open "$DEMO_PATH" 2>/dev/null || echo "Please open: $DEMO_PATH"
+fi
+
 echo ""
 echo "Backend API: http://localhost:8000"
 echo "API Docs: http://localhost:8000/docs"
