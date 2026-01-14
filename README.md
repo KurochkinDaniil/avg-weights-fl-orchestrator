@@ -4,42 +4,32 @@
 
 ---
 
-### 1Клонировать с submodules:
+### Клонировать и запустить:
 
 ```bash
-git clone --recurse-submodules https://github.com/KurochkinDaniil/avg-weights-fl-orchestrator.git
-cd fl
+git clone https://github.com/KurochkinDaniil/avg-weights-fl-orchestrator.git
+cd avg-weights-fl-orchestrator
+make dev  # или make up для полной системы
 ```
 
-### Запустить:
-
-**Только клавиатура + inference (без сервера):**
-```bash
-make dev
-```
-
-**Полная система (с FL-сервером):**
-```bash
-make up
-```
-
-### Открыть в браузере:
+### Открыть:
 
 ```
 http://localhost:3000/demo/index.html
 ```
 
+**Примечание:** `make dev` и `make up` автоматически инициализируют git submodules.
+
 ---
 
-## Команды Makefile
+## Команды
 
 ```bash
 make dev       # Запустить только клиент + frontend (без сервера)
 make up        # Запустить полную систему (с PostgreSQL, MinIO, Go-сервером)
 make down      # Остановить все контейнеры
-make logs      # Показать логи всех сервисов
-make build     # Пересобрать Docker образы
-make clean     # Удалить все контейнеры и volumes
-make train     # Войти в контейнер и запустить обучение
-make status    # Показать статус контейнеров
+make logs      # Показать логи
+make status    # Показать статус
+make train     # Запустить обучение
+make clean     # Удалить всё
 ```
