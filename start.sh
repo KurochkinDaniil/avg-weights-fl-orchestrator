@@ -3,17 +3,17 @@
 
 set -e
 
-echo "🚀 Starting Federated Learning Swipe Keyboard"
+echo "Starting Federated Learning Swipe Keyboard"
 echo ""
 
 # Check if we're in the right directory
 if [ ! -d "apps/client" ] || [ ! -d "apps/frontend" ]; then
-    echo "❌ Error: Run this script from the fl/ directory"
+    echo "Error: Run this script from the fl/ directory"
     exit 1
 fi
 
 # Start backend
-echo "📦 Starting Python backend..."
+echo "Starting Python backend..."
 cd apps/client
 
 # Check if venv exists
@@ -55,16 +55,16 @@ sleep 3
 
 # Check if backend is running
 if curl -s http://localhost:8000/health > /dev/null; then
-    echo "✅ Backend is running"
+    echo "Backend is running"
 else
-    echo "❌ Backend failed to start"
+    echo "Backend failed to start"
     kill $BACKEND_PID 2>/dev/null || true
     exit 1
 fi
 
 # Build frontend if needed
 echo ""
-echo "🎨 Checking frontend..."
+echo "Checking frontend..."
 cd apps/frontend
 
 if [ ! -d "node_modules" ]; then
