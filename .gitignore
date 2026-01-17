@@ -4,3 +4,22 @@
 .env
 .venv/
 venv/
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+
+# Data files
+apps/client/data/raw/
+*.jsonl
+
+# Model files
+*.pt
+*.pth
+*.ckpt
+
+# Jupyter
+.ipynb_checkpoints/
