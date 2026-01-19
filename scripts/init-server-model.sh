@@ -36,7 +36,7 @@ if docker ps | grep -q fl-minio; then
         minio/mc:latest \
         /bin/sh -c "
         mc alias set myminio http://fl-minio:9000 admin admin12345;
-        mc cp /models/initial_model.pt myminio/fl-models/weights/global/latest.pt;
+        mc cp /models/initial_model.pt myminio/mybucket/weights/global/latest.pt;
         echo '✓ Model uploaded to MinIO';
         "
 else

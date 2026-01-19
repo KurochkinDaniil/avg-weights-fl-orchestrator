@@ -35,8 +35,8 @@ services:
     entrypoint: >
       /bin/sh -c "
       mc alias set myminio http://minio:9000 admin admin12345;
-      mc mb -p myminio/fl-models || true;
-      mc policy set download myminio/fl-models;
+      mc mb -p myminio/mybucket || true;
+      mc policy set download myminio/mybucket;
       echo 'Bucket created and policy set';
       "
 
@@ -60,26 +60,27 @@ services:
       timeout: 5s
       retries: 5
 
-  # Go FL Server - gRPC server for federated learning
+  # Go FL Server - один сервер для всех клиентов
   fl-server:
     build:
       context: ./apps/server
       dockerfile: Dockerfile
     container_name: fl-server
     ports:
-      - "50051:50051"  # gRPC
-      - "8080:8080"    # HTTP (optional)
+      - "8081:8081"  # gRPC
     environment:
       - MINIO_ENDPOINT=minio:9000
       - MINIO_ACCESS_KEY=admin
       - MINIO_SECRET_KEY=admin12345
-      - MINIO_BUCKET=fl-models
+      - MINIO_BUCKET=mybucket
       - POSTGRES_HOST=postgres
       - POSTGRES_PORT=5432
       - POSTGRES_USER=fluser
       - POSTGRES_PASSWORD=flpassword
       - POSTGRES_DB=fl_metadata
-      - GRPC_PORT=50051
+      - GRPC_PORT=8081
+      - PATH_TO_PYTHON_SCRIPT=/app/internal/cron/aggregator/
+      - PYTHON_BIN_PATH=python
     depends_on:
       postgres:
         condition: service_healthy
@@ -89,34 +90,55 @@ services:
         condition: service_completed_successfully
     networks:
       - fl-network
-    volumes:
-      - ./apps/server:/app
-      - server_models:/models
+    restart: unless-stopped
 
-  # Python FL Client - collects data and trains locally
-  fl-client:
+  # Python FL Client 1 - Пользователь 1
+  fl-client-1:
     build:
       context: ./apps/client
       dockerfile: Dockerfile
-    container_name: fl-client
+    container_name: fl-client-1
     ports:
-      - "8000:8000"  # FastAPI
+      - "8000:8000"  # Frontend 1 подключается сюда
     environment:
-      - CLIENT_ID=client-docker-001
+      - CLIENT_ID=550e8400-e29b-41d4-a716-446655440001
       - API_HOST=0.0.0.0
       - API_PORT=8000
-      - SERVER_GRPC_URL=fl-server:50051
-      - NUM_EPOCHS=5
-      - BATCH_SIZE=32
+      - SERVER_GRPC_URL=fl-server:8081
+      - NUM_EPOCHS=3
+      - BATCH_SIZE=16
       - LEARNING_RATE=0.001
     depends_on:
       - fl-server
     networks:
       - fl-network
     volumes:
-      - ./apps/client:/app
-      - client_data:/app/data
-      - client_models:/app/models
+      - client_1_data:/app/data
+    restart: unless-stopped
+
+  # Python FL Client 2 - Пользователь 2
+  fl-client-2:
+    build:
+      context: ./apps/client
+      dockerfile: Dockerfile
+    container_name: fl-client-2
+    ports:
+      - "8001:8000"  # Frontend 2 подключается сюда (внешний порт 8001)
+    environment:
+      - CLIENT_ID=550e8400-e29b-41d4-a716-446655440002
+      - API_HOST=0.0.0.0
+      - API_PORT=8000
+      - SERVER_GRPC_URL=fl-server:8081
+      - NUM_EPOCHS=3
+      - BATCH_SIZE=16
+      - LEARNING_RATE=0.001
+    depends_on:
+      - fl-server
+    networks:
+      - fl-network
+    volumes:
+      - client_2_data:/app/data
+    restart: unless-stopped
 
 networks:
   fl-network:
@@ -125,6 +147,5 @@ networks:
 volumes:
   minio_data:
   postgres_data:
-  server_models:
-  client_data:
-  client_models:
+  client_1_data:  # Данные клиента 1 (изолированы)
+  client_2_data:  # Данные клиента 2 (изолированы)
